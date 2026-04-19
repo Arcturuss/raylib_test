@@ -57,27 +57,34 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 # Link to raylib (this handles OpenGL and system dependencies for you)
 target_link_libraries(${PROJECT_NAME} PRIVATE 
     raylib
-    shcore
+    # shcore
 )
 
 # ------------------------------------------------------------------------------
 # 4. Compiler & Linker Options
 # ------------------------------------------------------------------------------
 if (WIN32)
-    # Raylib handles its own Win32 definitions, but you can keep these:
+    # Windows/MinGW specific linking
+    target_link_libraries(${PROJECT_NAME} PRIVATE shcore)
+    
     target_compile_definitions(${PROJECT_NAME} PRIVATE _WIN32_WINNT=0x0603)
-    target_link_options(${PROJECT_NAME} PRIVATE -mwindows)
+    
+    target_link_options(${PROJECT_NAME} PRIVATE 
+        -mwindows
+        -static
+        -static-libgcc
+        -static-libstdc++
+        -fuse-ld=lld
+        -Wl,-pdb=test_osp.pdb
+        $<$<CONFIG:Debug>:-g -gcodeview>
+        $<$<CONFIG:Release>:-Wl,--gc-sections -s -flto -Wl,-Map=test_osp.map>
+    )
+elseif (APPLE)
+    # macOS specific linking for dead code stripping
+    target_link_options(${PROJECT_NAME} PRIVATE 
+        $<$<CONFIG:Release>:-Wl,-dead_strip>
+    )
 endif()
-
-target_link_options(${PROJECT_NAME} PRIVATE 
-    -static
-    -static-libgcc
-    -static-libstdc++
-    -fuse-ld=lld
-    -Wl,-pdb=test_osp.pdb
-    $<$<CONFIG:Debug>:-g -gcodeview>
-    $<$<CONFIG:Release>:-Wl,--gc-sections -s -flto -Wl,-Map=test_osp.map>
-)
 
 target_compile_options(${PROJECT_NAME} PRIVATE 
     $<$<CONFIG:Debug>:-g -O0>

@@ -1,0 +1,29 @@
+name: Build for Apple Silicon (macOS)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-mac:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure CMake
+        # Generates the build files in a 'build' directory
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build the Project
+        # Compiles the project using the generated files
+        run: cmake --build build --config Release
+
+      - name: Upload macOS Executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64-executable
+          # The executable will be inside the build folder
+          path: build/raylib-test
